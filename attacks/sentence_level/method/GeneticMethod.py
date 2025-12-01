@@ -3,6 +3,7 @@ from typing import Any
 
 import numpy as np
 import openai
+import os
 import anthropic
 import torch
 from aiolimiter import AsyncLimiter
@@ -240,8 +241,11 @@ class FuzzingMethod:
 
         else:
             limiter = AsyncLimiter(30, 60)
-            client = openai.AsyncOpenAI(base_url="http://127.0.0.1:8081/v1", api_key="test")
-            
+            # Force the target to the local test server. If you want to override, set TARGET_SERVER_URL/TARGET_API_KEY env vars.
+            base_url = os.environ.get("TARGET_SERVER_URL", "http://127.0.0.1:8081/v1")
+            api_key = os.environ.get("TARGET_API_KEY", "test")
+            client = openai.AsyncOpenAI(base_url=base_url, api_key=api_key)
+
             model = {"api": client, "name": model, "limiter": limiter}
             tokenizer = None
 

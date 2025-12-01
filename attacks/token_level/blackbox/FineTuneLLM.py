@@ -451,6 +451,10 @@ if __name__ == "__main__":
         bias="none",
         task_type="CAUSAL_LM",
     )
+    
+    # Decide quantization config and device mapping. Support CPU-only fallback.
+    use_cpu = not torch.cuda.is_available() or os.environ.get("CUDA_VISIBLE_DEVICES", "") == ""
+
     if script_args.load_in_8bit:
         quant_config = BitsAndBytesConfig(
             load_in_8bit=True, bnb_compute_dtype=torch.float16
@@ -463,14 +467,19 @@ if __name__ == "__main__":
             bnb_4bit_use_double_quant=script_args.use_nested_quant,
         )
     else:
-        raise ValueError("Please specify a quantization config")
+        # allow CPU-only runs without quantization
+        quant_config = None
+
+    # Determine device map for from_pretrained
+    device_map = {"": "cpu"} if use_cpu else {"": current_device}
+
     if script_args.resume:
         current_epoch = int(script_args.resume_checkpoint.split("_")[-1]) + 1
         model = AutoModelForCausalLMWithValueHead.from_pretrained(
             script_args.resume_checkpoint,
             quantization_config=quant_config,
-            device_map={"": current_device},
-            low_cpu_mem_usage=True if quant_config is not None else False,
+            device_map=device_map,
+            low_cpu_mem_usage=True if quant_config is not None or use_cpu else False,
             trust_remote_code=True,
         )
     else:
@@ -478,15 +487,32 @@ if __name__ == "__main__":
         model = AutoModelForCausalLMWithValueHead.from_pretrained(
             config.model_name,
             quantization_config=quant_config,
-            device_map={"": current_device},
+            device_map=device_map,
             peft_config=lora_config,
-            low_cpu_mem_usage=True if quant_config is not None else False,
+            low_cpu_mem_usage=True if quant_config is not None or use_cpu else False,
             trust_remote_code=True,
         )
 
-    optimizer = bitsandbytes.optim.PagedAdamW32bit(
-        model.parameters(), lr=config.learning_rate
-    )
+    # Select optimizer: use bitsandbytes optimizer when available and on CUDA, else fall back to torch AdamW
+    if (not use_cpu) and hasattr(bitsandbytes, "optim") and (script_args.load_in_8bit or script_args.load_in_4bit):
+        try:
+            optimizer = bitsandbytes.optim.PagedAdamW32bit(
+                model.parameters(), lr=config.learning_rate
+            )
+        except Exception:
+            optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config.learning_rate)
+
+    if script_args.adafactor:
+        optimizer = Adafactor(
+            filter(lambda p: p.requires_grad, model.parameters()),
+            scale_parameter=False,
+            relative_step=False,
+            warmup_init=False,
+            lr=config.learning_rate,
+        )
+
     if script_args.adafactor:
         optimizer = Adafactor(
             filter(lambda p: p.requires_grad, model.parameters()),
