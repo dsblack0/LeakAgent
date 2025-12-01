@@ -8,4 +8,6 @@ wandb/
 **/*.ipynb
 **/rmit*
 pictures
+venv/
+
 train_log
