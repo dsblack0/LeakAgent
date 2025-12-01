@@ -58,7 +58,7 @@ def test_model(
     ]
     prompts = local_chat(message, atk_model, atk_tok)
     del atk_model
-    torch.cuda.empty_cache()
+    # torch.cuda.empty_cache()
 
     dfs_model = AutoModelForCausalLM.from_pretrained(dfs_path, device_map="auto")
     dfs_tok = AutoTokenizer.from_pretrained(dfs_path, padding_side="left")

@@ -240,13 +240,8 @@ class FuzzingMethod:
 
         else:
             limiter = AsyncLimiter(30, 60)
-            if "gpt" in model:
-                if helper:
-                    client = openai.OpenAI()
-                else:
-                    client = openai.AsyncOpenAI()
-            elif "claude" in model:
-                client = anthropic.AsyncAnthropic()
+            client = openai.AsyncOpenAI(base_url="http://127.0.0.1:8081/v1", api_key="test")
+            
             model = {"api": client, "name": model, "limiter": limiter}
             tokenizer = None
 
