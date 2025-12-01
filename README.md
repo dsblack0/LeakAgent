@@ -7,6 +7,12 @@
 ```bash
 pip install -r requirements.txt
 ```
+```bash
+python3 - <<'PY'
+import nltk
+nltk.download('punkt_tab')
+PY
+```
 
 ## Attack Options
 
@@ -77,5 +83,6 @@ Original Paper
 }
 
 ```
+
 
 
