@@ -24,11 +24,11 @@ python3 pipeline.py \
   --prompts_data_path train_data_pleak.csv \
   2>&1 | tee pipeline_output.log
 ```
-    - Methods
-        - fuzz: Fuzzing-based search (UCB/MCTS seed selection + mutations)
-        - re: ReAct (reasoning-based attack generation)
-        - sent_rl: Lightweight sentence-level RL
-        - gcg / prob: Token-level gradient/probabilistic methods
+- Methods
+    - fuzz: Fuzzing-based search (UCB/MCTS seed selection + mutations)
+    - re: ReAct (reasoning-based attack generation)
+    - sent_rl: Lightweight sentence-level RL
+    - gcg / prob: Token-level gradient/probabilistic methods
 
 ### RL Fine-Tuning of Large Model (GPU)
 - fine-tunes a LLM using PPO and RLHF
@@ -77,4 +77,5 @@ Original Paper
 }
 
 ```
+
 
