@@ -74,6 +74,7 @@ py-cpuinfo==9.0.0
 
 # FIXED LINE ↓↓↓
 pyairports==0.0.1
+tensorboard
 
 pyarrow==17.0.0
 pycountry==24.6.1
